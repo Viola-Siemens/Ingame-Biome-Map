@@ -1,0 +1,10 @@
+{
+  "language": "English",
+  "language.code": "en_us",
+  "language.region": "United States",
+  "dyeable_redstone_signal.config.title": "",
+
+  "info.export.success": "Successfully exported biome map to %s.",
+  "commands.radius.invalid": "Invalid parameter radius = %d, required radius > 0",
+  "commands.scale.invalid": "Invalid parameter scale = %d, required scale > 0"
+}
