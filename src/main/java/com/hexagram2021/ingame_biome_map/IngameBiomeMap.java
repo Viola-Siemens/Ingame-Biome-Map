@@ -3,19 +3,19 @@ package com.hexagram2021.ingame_biome_map;
 import com.hexagram2021.ingame_biome_map.commands.IBMCommand;
 import com.hexagram2021.ingame_biome_map.utils.ConfigHelper;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.logging.LogUtils;
-import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.command.CommandSource;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.slf4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import static com.hexagram2021.ingame_biome_map.IngameBiomeMap.MODID;
 
 @Mod(MODID)
 public class IngameBiomeMap {
-	public static final Logger LOGGER = LogUtils.getLogger();
+	public static final Logger LOGGER = LogManager.getLogger();
 
 	public static final ConfigHelper config = new ConfigHelper("IBMConfig.json");
 
@@ -30,7 +30,7 @@ public class IngameBiomeMap {
 
 	@SubscribeEvent
 	public void registerCommands(RegisterCommandsEvent event) {
-		final CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+		final CommandDispatcher<CommandSource> dispatcher = event.getDispatcher();
 		dispatcher.register(IBMCommand.register());
 	}
 }

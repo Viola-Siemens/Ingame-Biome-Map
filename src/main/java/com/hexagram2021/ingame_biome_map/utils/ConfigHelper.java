@@ -2,11 +2,13 @@ package com.hexagram2021.ingame_biome_map.utils;
 
 import com.google.gson.*;
 import com.hexagram2021.ingame_biome_map.IngameBiomeMap;
+import org.apache.commons.lang3.StringUtils;
 
 import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ConfigHelper {
 	public final File filePath = new File("./config/");
@@ -33,7 +35,7 @@ public class ConfigHelper {
 	private List<CustomBiome> customBiomes = null;
 
 	public ConfigHelper(String filename) {
-		this.file = new File(this.filePath.toString() + "/" + filename);
+		this.file = new File(this.filePath + "/" + filename);
 
 		try {
 			if (!this.filePath.exists() && !this.filePath.mkdir()) {
@@ -47,7 +49,8 @@ public class ConfigHelper {
 			} else {
 				FileInputStream in = new FileInputStream(this.file);
 				Reader reader = new InputStreamReader(in);
-				JsonElement json = JsonParser.parseReader(reader);
+				JsonParser parser = new JsonParser();
+				JsonElement json = parser.parse(reader);
 				reader.close();
 				in.close();
 				this.loadFromJson(json.getAsJsonObject());
@@ -115,7 +118,7 @@ public class ConfigHelper {
 	}
 
 	public static void writeJsonToFile(Writer writer, String key, JsonElement json, int tab) throws IOException {
-		writer.write("\t".repeat(tab));
+		writer.write(StringUtils.repeat("\t", tab));
 		if(key != null) {
 			writer.write("\"" + key + "\": ");
 		}
@@ -130,7 +133,7 @@ public class ConfigHelper {
 				}
 				writeJsonToFile(writer, entry.getKey(), entry.getValue(), tab + 1);
 			}
-			writer.write("\n" + "\t".repeat(tab) + "}");
+			writer.write("\n" + StringUtils.repeat("\t", tab) + "}");
 		} else if(json.isJsonArray()) {
 			writer.write("[\n");
 			boolean first = true;
@@ -142,7 +145,7 @@ public class ConfigHelper {
 				}
 				writeJsonToFile(writer, null, element, tab + 1);
 			}
-			writer.write("\n" + "\t".repeat(tab) + "]");
+			writer.write("\n" + StringUtils.repeat("\t", tab) + "]");
 		} else if(json.isJsonPrimitive()) {
 			JsonPrimitive jsonPrimitive = json.getAsJsonPrimitive();
 			if(jsonPrimitive.isBoolean()) {
@@ -156,7 +159,7 @@ public class ConfigHelper {
 	}
 
 	public Color getColorById(String id) {
-		List<CustomBiome> matchedList = this.customBiomes.stream().filter((customBiome) -> customBiome.id.equals(id)).toList();
+		List<CustomBiome> matchedList = this.customBiomes.stream().filter((customBiome) -> customBiome.id.equals(id)).collect(Collectors.toList());
 		if(matchedList.size() == 0) return null;
 		return matchedList.get(0).getColor();
 	}

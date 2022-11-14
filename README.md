@@ -1,4 +1,4 @@
 # Ingame-Biome-Map
-A Minecraft 1.18.2 mod based on forge 40.1.0.
+A Minecraft 1.16.5 mod based on forge 36.2.34.
 
 You can export biome map in game.

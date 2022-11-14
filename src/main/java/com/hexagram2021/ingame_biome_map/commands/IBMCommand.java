@@ -7,16 +7,16 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
+import net.minecraft.command.arguments.EntityArgument;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.text.TranslationTextComponent;
 
 import java.io.IOException;
 
 public class IBMCommand {
-	public static LiteralArgumentBuilder<CommandSourceStack> register() {
+	public static LiteralArgumentBuilder<CommandSource> register() {
 		return Commands.literal("exportbiomemap").requires((stack) -> stack.hasPermission(2))
 				.then(Commands.argument("radius", IntegerArgumentType.integer())
 						.then(Commands.argument("scale", IntegerArgumentType.integer())
@@ -25,13 +25,13 @@ public class IBMCommand {
 	}
 
 	private static final DynamicCommandExceptionType INVALID_RADIUS_PARAMETER = new DynamicCommandExceptionType(
-			(radius) -> new TranslatableComponent("commands.radius.invalid", radius)
+			(radius) -> new TranslationTextComponent("commands.radius.invalid", radius)
 	);
 	private static final DynamicCommandExceptionType INVALID_SCALE_PARAMETER = new DynamicCommandExceptionType(
-			(scale) -> new TranslatableComponent("commands.scale.invalid", scale)
+			(scale) -> new TranslationTextComponent("commands.scale.invalid", scale)
 	);
 
-	public static int exportBiomeMap(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+	public static int exportBiomeMap(CommandContext<CommandSource> context) throws CommandSyntaxException {
 		Integer radius = context.getArgument("radius", Integer.class);
 		Integer scale = context.getArgument("scale", Integer.class);
 		if(radius <= 0) {
@@ -41,7 +41,7 @@ public class IBMCommand {
 			throw INVALID_SCALE_PARAMETER.create(scale);
 		}
 		try {
-			ServerPlayer player = EntityArgument.getPlayer(context, "player");
+			ServerPlayerEntity player = EntityArgument.getPlayer(context, "player");
 			new FileHelper(player, player.getOnPos(), radius, scale);
 		} catch (IOException | CommandSyntaxException e) {
 			IngameBiomeMap.LOGGER.error(e.toString());
