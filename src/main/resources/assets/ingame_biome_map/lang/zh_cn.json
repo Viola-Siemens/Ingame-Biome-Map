@@ -1,0 +1,10 @@
+{
+  "language": "Chinese",
+  "language.code": "zh_cn",
+  "language.region": "China",
+  "ingame_biome_map.config.title": "",
+
+  "info.export.success": "成功将群系地图导出到 %s.",
+  "commands.radius.invalid": "参数错误【导出半径 radius = %d】，导出半径应大于0",
+  "commands.scale.invalid": "参数错误【地图缩放 scale = %d】，地图缩放应大于0"
+}

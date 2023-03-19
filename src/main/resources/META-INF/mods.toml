@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[41,)"
+license="MIT"
+
+[[mods]]
+modId="ingame_biome_map"
+version="${file.jarVersion}"
+displayName="Ingame Biome Map Exporter"
+logoFile="logo.png"
+credits="Liu Dongyu"
+authors="Hexagram"
+description='''
+Use command "/exportbiomemap <radius> <scale> <player>" to export the biome map of your world in-game!
+'''
+
+[[dependencies.ingame_biome_map]]
+    modId="forge"
+    mandatory=true
+    versionRange="[41,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.ingame_biome_map]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.19,1.20)"
+    ordering="NONE"
+    side="BOTH"
