@@ -1,5 +1,6 @@
 package com.hexagram2021.ingame_biome_map.utils;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import com.hexagram2021.ingame_biome_map.IngameBiomeMap;
 import net.minecraft.core.Holder;
@@ -40,6 +41,8 @@ public class ConfigHelper {
 	private Boolean structure = null;
 	@Nullable
 	private List<CustomBiome> customBiomes = null;
+	
+	private final Map<ResourceLocation, Color> biomeColors;
 
 	public ConfigHelper(String filename) {
 		this.file = new File(this.filePath + "/" + filename);
@@ -65,6 +68,9 @@ public class ConfigHelper {
 		} catch(IOException e) {
 			IngameBiomeMap.LOGGER.error(e.toString());
 		}
+		ImmutableMap.Builder<ResourceLocation, Color> builder = ImmutableMap.builder();
+		this.customBiomes.forEach(b -> builder.put(b.id, b.getColor()));
+		this.biomeColors = builder.build();
 	}
 
 	private void loadFromJson(JsonObject json) {
@@ -96,7 +102,7 @@ public class ConfigHelper {
 			this.port = 1949;
 		}
 		if(this.structure == null) {
-			this.structure = true;
+			this.structure = false;
 		}
 		if(this.customBiomes == null) {
 			this.customBiomes = new ArrayList<>();
@@ -185,6 +191,7 @@ public class ConfigHelper {
 			FileOutputStream out = new FileOutputStream(this.file);
 			JsonObject json = new JsonObject();
 			json.addProperty("port", this.port);
+			json.addProperty("structure", this.structure);
 			JsonArray array = new JsonArray();
 			if(this.customBiomes != null) {
 				for (CustomBiome customBiome : this.customBiomes) {
@@ -249,14 +256,14 @@ public class ConfigHelper {
 	}
 
 	@Nullable
-	public Color getColorByBiome(Holder<Biome> target) {
+	public Color getColorByBiome(ResourceLocation target) {
 		if(this.customBiomes == null) {
 			return null;
 		}
-		List<CustomBiome> matchedList = this.customBiomes.stream().filter((customBiome) -> target.is(customBiome.id)).toList();
-		if(matchedList.size() == 0) {
-			return null;
-		}
-		return matchedList.get(0).getColor();
+		return this.biomeColors.get(target);
+	}
+	
+	public boolean drawStructures() {
+		return Boolean.TRUE.equals(this.structure);
 	}
 }

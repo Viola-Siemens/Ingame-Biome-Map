@@ -6,6 +6,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -60,37 +61,37 @@ public class FileHelper {
 				int finalY = range + j;
 				BlockPos current = blockPos.offset(i * this.SCALE, 0, j * this.SCALE);
 				
-				//Structures
-				if(this.SCALE < 16) {
-					int inChunkX = current.getX() & 15;
-					int inChunkZ = current.getZ() & 15;
-					if (Math.abs(8 - inChunkX) < Math.abs(8 - inChunkX - this.SCALE) &&
-							Math.abs(8 - inChunkX) <= Math.abs(8 - inChunkX + this.SCALE) &&
-							Math.abs(8 - inChunkZ) < Math.abs(8 - inChunkZ - this.SCALE) &&
-							Math.abs(8 - inChunkZ) <= Math.abs(8 - inChunkZ + this.SCALE)) {
-						chunkStructures(level, structureRegistry, new ChunkPos(current)).forEach(rl -> features.add(new Tuple<>(new Tuple<>(finalX, finalY), rl)));
-					}
-				} else {
-					int preChunkX = (current.getX() - this.SCALE) >> 4;
-					int preChunkZ = (current.getZ() - this.SCALE) >> 4;
-					int chunkX = current.getX() >> 4;
-					int chunkZ = current.getZ() >> 4;
-					int nextChunkX = (current.getX() + this.SCALE) >> 4;
-					int nextChunkZ = (current.getZ() + this.SCALE) >> 4;
-					for(int di = ((preChunkX + chunkX) >> 1) + 1; di <= (chunkX + nextChunkX) >> 1; ++di) {
-						for(int dj = ((preChunkZ + chunkZ) >> 1) + 1; dj <= (chunkZ + nextChunkZ) >> 1; ++dj) {
-							chunkStructures(level, structureRegistry, new ChunkPos(di, dj)).forEach(rl -> features.add(new Tuple<>(new Tuple<>(finalX, finalY), rl)));
+				if(IngameBiomeMap.config.drawStructures()) {
+					if (this.SCALE < 16) {
+						int inChunkX = current.getX() & 15;
+						int inChunkZ = current.getZ() & 15;
+						if (Math.abs(8 - inChunkX) < Math.abs(8 - inChunkX - this.SCALE) &&
+								Math.abs(8 - inChunkX) <= Math.abs(8 - inChunkX + this.SCALE) &&
+								Math.abs(8 - inChunkZ) < Math.abs(8 - inChunkZ - this.SCALE) &&
+								Math.abs(8 - inChunkZ) <= Math.abs(8 - inChunkZ + this.SCALE)) {
+							chunkStructures(level, structureRegistry, new ChunkPos(current)).forEach(rl -> features.add(new Tuple<>(new Tuple<>(finalX, finalY), rl)));
+						}
+					} else {
+						int preChunkX = (current.getX() - this.SCALE) >> 4;
+						int preChunkZ = (current.getZ() - this.SCALE) >> 4;
+						int chunkX = current.getX() >> 4;
+						int chunkZ = current.getZ() >> 4;
+						int nextChunkX = (current.getX() + this.SCALE) >> 4;
+						int nextChunkZ = (current.getZ() + this.SCALE) >> 4;
+						for (int di = ((preChunkX + chunkX) >> 1) + 1; di <= (chunkX + nextChunkX) >> 1; ++di) {
+							for (int dj = ((preChunkZ + chunkZ) >> 1) + 1; dj <= (chunkZ + nextChunkZ) >> 1; ++dj) {
+								chunkStructures(level, structureRegistry, new ChunkPos(di, dj)).forEach(rl -> features.add(new Tuple<>(new Tuple<>(finalX, finalY), rl)));
+							}
 						}
 					}
 				}
 				
-				//Biomes
 				Holder<Biome> biome = level.getBiome(current);
 				image.setRGB(finalX, finalY, getColor(biome, duplicateUnknown).getRGB());
 			}
 		}
 
-		features.forEach((feature) -> {
+		features.forEach(feature -> {
 			Tuple<Integer, Integer> xy = feature.getA();
 			placeFeatureToImage(xy.getA(), xy.getB(), feature.getB(), image);
 		});
@@ -126,11 +127,12 @@ public class FileHelper {
 	}
 
 	private static Color getColor(Holder<Biome> biome, Set<String> duplicateUnknown) {
-		Color customColor = IngameBiomeMap.config.getColorByBiome(biome);
+		ResourceLocation biomeId = biome.unwrap().map(ResourceKey::location, b -> Objects.requireNonNull(ForgeRegistries.BIOMES.getKey(b)));
+		Color customColor = IngameBiomeMap.config.getColorByBiome(biomeId);
 		if (customColor != null) {
 			return customColor;
 		}
-		String biomeName = biome.unwrap().map(rk -> rk.location().toString(), b -> Objects.requireNonNull(ForgeRegistries.BIOMES.getKey(b)).toString());
+		String biomeName = biomeId.toString();
 		if (!duplicateUnknown.contains(biomeName)) {
 			IngameBiomeMap.LOGGER.info("Failed to match " + biomeName);
 			duplicateUnknown.add(biomeName);
