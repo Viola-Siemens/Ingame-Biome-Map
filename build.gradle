@@ -1,38 +1,56 @@
 buildscript {
     repositories {
         maven { url = 'https://maven.minecraftforge.net' }
+        jcenter()
         mavenCentral()
+        maven { name="sponge"; url 'https://repo.spongepowered.org/repository/maven-public/' }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '[6.0,6.2)', changing: true
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
-// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
+
 plugins {
     id 'eclipse'
+    id 'idea'
     id 'maven-publish'
 }
 apply plugin: 'net.minecraftforge.gradle'
 
-version = '2.0'
+apply plugin: 'org.spongepowered.mixin'
+
+base {
+    archivesName = 'ingame_biome_map'
+}
+
+version = '3.0.0'
 group = 'com.hexagram2021.ingame_biome_map'
-archivesBaseName = 'ingame_biome_map'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
-    mappings channel: 'official', version: '1.19'
+    mappings channel: 'official', version: '1.20'
+
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    enableIdeaPrepareRuns = true
+    copyIdeResources = true
+    generateRunFolders = true
 
     runs {
         client {
             workingDirectory project.file('run')
 
             property 'forge.logging.markers', 'REGISTRIES'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
             property 'forge.logging.console.level', 'debug'
 
             property 'forge.enabledGameTestNamespaces', 'ingame_biome_map'
+            arg "-mixin.config=ingame_biome_map.mixins.json"
 
             mods {
                 ingame_biome_map {
@@ -45,8 +63,11 @@ minecraft {
             workingDirectory project.file('run')
 
             property 'forge.logging.markers', 'REGISTRIES'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
             property 'forge.logging.console.level', 'debug'
+            arg "-mixin.config=ingame_biome_map.mixins.json"
 
             property 'forge.enabledGameTestNamespaces', 'ingame_biome_map'
 
@@ -61,10 +82,13 @@ minecraft {
             workingDirectory project.file('run')
 
             property 'forge.logging.markers', 'REGISTRIES'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
             property 'forge.logging.console.level', 'debug'
 
             property 'forge.enabledGameTestNamespaces', 'ingame_biome_map'
+            arg "-mixin.config=ingame_biome_map.mixins.json"
 
             mods {
                 ingame_biome_map {
@@ -77,10 +101,13 @@ minecraft {
             workingDirectory project.file('run')
 
             property 'forge.logging.markers', 'REGISTRIES'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
             property 'forge.logging.console.level', 'debug'
 
             args '--mod', 'ingame_biome_map', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            arg "-mixin.config=ingame_biome_map.mixins.json"
 
             mods {
                 ingame_biome_map {
@@ -94,33 +121,57 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
-	
+    maven { // TOP
+        url "https://cursemaven.com"
+    }
+    maven { // JEI
+        name 'DVS1 Maven FS'
+        url 'https://dvs1.progwml6.com/files/maven'
+    }
+    maven { //mirror
+        name = "ModMaven"
+        url = "https://modmaven.dev"
+    }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19-41.1.0'
+    minecraft 'net.minecraftforge:forge:1.20-46.0.14'
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
 jar {
     manifest {
         attributes([
                 "Specification-Title"     : "Ingame Biome Map Exporter",
-                "Specification-Vendor"    : "Hexagram",
-                "Specification-Version"   : "1",
+                "Specification-Vendor"    : "Liu Dongyu",
+                "Specification-Version"   : "1", // We are version 1 of ourselves
                 "Implementation-Title"    : project.name,
                 "Implementation-Version"  : project.jar.archiveVersion,
-                "Implementation-Vendor"   : "Hexagram",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Implementation-Vendor"   : "Liu Dongyu",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'FMLCorePluginContainsFMLMod': 'true',
+                "MixinConfigs"            : "ingame_biome_map.mixins.json"
         ])
     }
 }
 
 jar.finalizedBy('reobfJar')
 
+task sourceJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allJava
+}
+
+artifacts {
+    archives sourceJar
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             artifact jar
+            artifact sourceJar
         }
     }
     repositories {
@@ -128,6 +179,14 @@ publishing {
             url "file://${project.projectDir}/mcmodsrepo"
         }
     }
+}
+
+mixin {
+    add sourceSets.main, 'ingame_biome_map.refmap.json'
+    config 'ingame_biome_map.mixins.json'
+
+    debug.verbose = true
+    debug.export = true
 }
 
 tasks.withType(JavaCompile).configureEach {

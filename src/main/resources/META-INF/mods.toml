@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[41,)"
+loaderVersion="[46,)"
 license="MIT"
 
 [[mods]]
@@ -16,12 +16,12 @@ Use command "/exportbiomemap <radius> <scale> <player>" to export the biome map 
 [[dependencies.ingame_biome_map]]
     modId="forge"
     mandatory=true
-    versionRange="[41,)"
+    versionRange="[46,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.ingame_biome_map]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.19,1.20)"
+    versionRange="[1.20,1.21)"
     ordering="NONE"
     side="BOTH"
