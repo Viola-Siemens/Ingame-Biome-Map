@@ -93,7 +93,7 @@ public class FileHelper {
 
 		features.forEach(feature -> {
 			Tuple<Integer, Integer> xy = feature.getA();
-			placeFeatureToImage(xy.getA(), xy.getB(), feature.getB(), image);
+			placeFeatureToImage(xy.getA(), xy.getB(), feature.getB(), image, duplicateUnknown);
 		});
 
 		ImageIO.write(image, "png", this.file);
@@ -105,11 +105,17 @@ public class FileHelper {
 				.map(start -> structureRegistry.getKey(start.getStructure())).filter(Objects::nonNull).toList();
 	}
 
-	private static void placeFeatureToImage(int x, int y, ResourceLocation feature, BufferedImage image) {
+	private static void placeFeatureToImage(int x, int y, ResourceLocation feature, BufferedImage image, Set<String> duplicateUnknown) {
 		BufferedImage source = IngameBiomeMap.iconManager.getImageByStructureId(feature);
-		if(source != null) {
-			placeFeatureIcon(x, y, source, image);
+		if(source == null) {
+			String featureName = feature.toString();
+			if (!duplicateUnknown.contains(featureName)) {
+				IngameBiomeMap.LOGGER.info("Failed to match " + featureName);
+				duplicateUnknown.add(featureName);
+			}
+			return;
 		}
+		placeFeatureIcon(x, y, source, image);
 	}
 	private static void placeFeatureIcon(int x, int y, BufferedImage icon, BufferedImage image) {
 		int wid2 = icon.getWidth() / 2;

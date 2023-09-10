@@ -53,6 +53,7 @@ public class IconManager extends SimpleJsonResourceReloadListener {
 			}
 		}
 		this.icons = builder.build();
+		IngameBiomeMap.LOGGER.info("Loaded {} icons", this.icons.size());
 	}
 	
 	@Nullable
