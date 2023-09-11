@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -90,19 +91,22 @@ public class FileHelper {
 				image.setRGB(finalX, finalY, getColor(biome, duplicateUnknown).getRGB());
 			}
 		}
-
-		features.forEach(feature -> {
-			Tuple<Integer, Integer> xy = feature.getA();
-			placeFeatureToImage(xy.getA(), xy.getB(), feature.getB(), image, duplicateUnknown);
-		});
+		
+		if(IngameBiomeMap.config.drawStructures()) {
+			IngameBiomeMap.LOGGER.info("Found " + features.size() + " structures.");
+			features.forEach(feature -> {
+				Tuple<Integer, Integer> xy = feature.getA();
+				placeFeatureToImage(xy.getA(), xy.getB(), feature.getB(), image, duplicateUnknown);
+			});
+		}
 
 		ImageIO.write(image, "png", this.file);
 	}
 
 	// TODO: place structure icons on the map.
 	private List<ResourceLocation> chunkStructures(ServerLevel level, Registry<Structure> structureRegistry, ChunkPos chunkPos) {
-		return level.structureManager().startsForStructure(chunkPos, s -> true).stream()
-				.map(start -> structureRegistry.getKey(start.getStructure())).filter(Objects::nonNull).toList();
+		return level.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.STRUCTURE_STARTS).getAllStarts().keySet().stream()
+				.map(structureRegistry::getKey).filter(Objects::nonNull).toList();
 	}
 
 	private static void placeFeatureToImage(int x, int y, ResourceLocation feature, BufferedImage image, Set<String> duplicateUnknown) {
@@ -124,8 +128,10 @@ public class FileHelper {
 		int maxj = Math.min(image.getHeight(), y + icon.getHeight() - hgt2);
 		for(int i = Math.max(0, x - wid2); i < maxi; ++i) {
 			for(int j = Math.max(0, y - hgt2); j < maxj; ++j) {
-				int rgb = icon.getRGB(i + wid2, j + hgt2);
-				if(rgb != 0) {
+				int rgba = icon.getRGB(i - x + wid2, j - y + hgt2);
+				int rgb = rgba & 0xffffff;
+				int a = (rgba >> 24) & 0xff;
+				if(a >= 100) {
 					image.setRGB(i, j, rgb);
 				}
 			}

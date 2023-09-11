@@ -44,7 +44,7 @@ public class IBMCommand {
 			ServerPlayer player = EntityArgument.getPlayer(context, "player");
 			new FileHelper(player, player.getOnPos(), radius, scale);
 		} catch (IOException | CommandSyntaxException e) {
-			IngameBiomeMap.LOGGER.error(e.toString());
+			IngameBiomeMap.LOGGER.error("Error when export biome map: ", e);
 		}
 		return 1;
 	}
