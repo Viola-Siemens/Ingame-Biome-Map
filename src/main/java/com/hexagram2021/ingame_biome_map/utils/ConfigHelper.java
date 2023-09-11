@@ -181,6 +181,7 @@ public class ConfigHelper {
 			this.customBiomes.add(new CustomBiome("emeraldcraft:deep_dead_warped_ocean", 33, 213, 188, 255));
 			this.customBiomes.add(new CustomBiome("emeraldcraft:quartz_desert", 236, 234, 234, 255));
 			this.customBiomes.add(new CustomBiome("emeraldcraft:emery_desert", 32, 32, 34, 255));
+			this.customBiomes.add(new CustomBiome("emeraldcraft:purpuraceus_swamp", 154, 108, 180, 255));
 		}
 		this.saveConfig();
 	}
