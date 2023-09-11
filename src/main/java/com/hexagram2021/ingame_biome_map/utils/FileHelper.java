@@ -132,7 +132,7 @@ public class FileHelper {
 				int rgb = rgba & 0xffffff;
 				int a = (rgba >> 24) & 0xff;
 				if(a >= 100) {
-					image.setRGB(i, j, rgb);
+					image.setRGB(i, j, rgb | (0xff << 24));
 				}
 			}
 		}
