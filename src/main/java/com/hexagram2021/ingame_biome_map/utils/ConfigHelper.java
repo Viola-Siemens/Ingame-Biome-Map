@@ -3,16 +3,14 @@ package com.hexagram2021.ingame_biome_map.utils;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import com.hexagram2021.ingame_biome_map.IngameBiomeMap;
-import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 
 import javax.annotation.Nullable;
 import java.awt.*;
 import java.io.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class ConfigHelper {
 	public final File filePath = new File("./config/");
@@ -176,6 +174,7 @@ public class ConfigHelper {
 			this.customBiomes.add(new CustomBiome("emeraldcraft:petunia_plains", 54, 210, 98, 255));
 			this.customBiomes.add(new CustomBiome("emeraldcraft:xanadu", 12, 246, 40, 255));
 			this.customBiomes.add(new CustomBiome("emeraldcraft:palm_beach", 134, 108, 72, 255));
+			this.customBiomes.add(new CustomBiome("emeraldcraft:golden_beach", 148, 144, 62, 255));
 			this.customBiomes.add(new CustomBiome("emeraldcraft:dead_crimson_ocean", 116, 32, 252, 255));
 			this.customBiomes.add(new CustomBiome("emeraldcraft:dead_warped_ocean", 48, 236, 212, 255));
 			this.customBiomes.add(new CustomBiome("emeraldcraft:deep_dead_crimson_ocean", 95, 11, 210, 255));

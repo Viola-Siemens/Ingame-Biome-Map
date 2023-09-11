@@ -25,8 +25,6 @@ public class IngameBiomeMap {
 	public static IconManager iconManager;
 
 	public static final String MODID = "ingame_biome_map";
-	public static final String MODNAME = "Ingame Biome Map";
-	public static final String VERSION = "${version}";
 
 	public IngameBiomeMap() {
 		MinecraftForge.EVENT_BUS.addListener(this::registerCommands);
