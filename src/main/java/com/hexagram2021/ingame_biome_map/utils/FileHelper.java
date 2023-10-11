@@ -1,6 +1,8 @@
 package com.hexagram2021.ingame_biome_map.utils;
 
 import com.hexagram2021.ingame_biome_map.IngameBiomeMap;
+import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -29,27 +31,72 @@ import java.util.*;
 public class FileHelper {
 	public final File filePath = new File("./BiomeMap/");
 	private final File file;
-	private final int RADIUS;
-	private final int SCALE;
+	private final int radius;
+	private final int scale;
+	private final boolean structure;
 
-	public FileHelper(ServerPlayer player, BlockPos standPos, Integer radius, Integer scale) throws IOException {
-		this.RADIUS = radius;
-		this.SCALE = scale;
+	public FileHelper(ServerPlayer player, BlockPos standPos, int radius, int scale, boolean structure) throws IOException {
+		this.radius = radius;
+		this.scale = scale;
+		this.structure = structure;
 		this.file = new File(this.filePath + "/[" + player.getDisplayName().getString() + "]" + LocalDateTime.now().toString().replaceAll(":", "_") + "(" + radius + ").png");
 		if (!this.filePath.exists() && !this.filePath.mkdir()) {
 			IngameBiomeMap.LOGGER.error("Could not mkdir " + this.filePath);
 		} else if (!this.file.exists() && !this.file.createNewFile()) {
 			IngameBiomeMap.LOGGER.error("Could not create new file " + this.file);
 		} else {
-			IngameBiomeMap.LOGGER.info("Exporting map with radius of " + this.RADIUS);
+			IngameBiomeMap.LOGGER.info("Exporting map with radius of " + this.radius);
+			if(IngameBiomeMap.config.isMultiThread()) {
+				new Thread(() -> threadTask(player, standPos)).start();
+			} else {
+				threadTask(player, standPos);
+			}
+		}
+	}
+	
+	public FileHelper(CommandContext<CommandSourceStack> context, BlockPos standPos, int radius, int scale, boolean structure) throws IOException {
+		this.radius = radius;
+		this.scale = scale;
+		this.structure = structure;
+		this.file = new File(this.filePath + "/[" + context.getSource().getServer().name() + "]" + LocalDateTime.now().toString().replaceAll(":", "_") + "(" + radius + ").png");
+		if (!this.filePath.exists() && !this.filePath.mkdir()) {
+			IngameBiomeMap.LOGGER.error("Could not mkdir " + this.filePath);
+		} else if (!this.file.exists() && !this.file.createNewFile()) {
+			IngameBiomeMap.LOGGER.error("Could not create new file " + this.file);
+		} else {
+			IngameBiomeMap.LOGGER.info("Exporting map with radius of " + this.radius);
+			if(IngameBiomeMap.config.isMultiThread()) {
+				new Thread(() -> threadTask(context, standPos)).start();
+			} else {
+				threadTask(context, standPos);
+			}
+		}
+	}
+	
+	private void threadTask(ServerPlayer player, BlockPos standPos) {
+		try {
 			this.writeToFile(player.serverLevel(), standPos);
-			IngameBiomeMap.LOGGER.info("Successfully exported map with radius of " + this.RADIUS);
+			IngameBiomeMap.LOGGER.info("Successfully exported map with radius of " + this.radius);
 			player.sendSystemMessage(Component.translatable("info.export.success", this.file.toString()));
+		} catch (IOException e) {
+			IngameBiomeMap.LOGGER.info("Failed to exported biome map.", e);
+			player.sendSystemMessage(Component.translatable("info.export.failure"));
+		}
+	}
+	
+	private void threadTask(CommandContext<CommandSourceStack> context, BlockPos standPos) {
+		try {
+			this.writeToFile(context.getSource().getLevel(), standPos);
+			IngameBiomeMap.LOGGER.info("Successfully exported map with radius of " + this.radius);
+			context.getSource().sendSuccess(() -> Component.translatable("info.export.success", this.file.toString()), true);
+		} catch (IOException e) {
+			IngameBiomeMap.LOGGER.info("Failed to exported biome map.", e);
+			context.getSource().sendSuccess(() -> Component.translatable("info.export.failure"), true);
 		}
 	}
 
 	private void writeToFile(ServerLevel level, BlockPos blockPos) throws IOException {
-		int range = this.RADIUS / this.SCALE;
+		int range = this.radius / this.scale;
 		BufferedImage image = new BufferedImage(range * 2 + 1, range * 2 + 1, BufferedImage.TYPE_4BYTE_ABGR);
 
 		List<Tuple<Tuple<Integer, Integer>, ResourceLocation>> features = new ArrayList<>();
@@ -60,25 +107,25 @@ public class FileHelper {
 			for(int j = -range; j <= range; ++j) {
 				int finalX = range + i;
 				int finalY = range + j;
-				BlockPos current = blockPos.offset(i * this.SCALE, 0, j * this.SCALE);
+				BlockPos current = blockPos.offset(i * this.scale, 0, j * this.scale);
 				
-				if(IngameBiomeMap.config.drawStructures()) {
-					if (this.SCALE < 16) {
+				if(this.structure) {
+					if (this.scale < 16) {
 						int inChunkX = current.getX() & 15;
 						int inChunkZ = current.getZ() & 15;
-						if (Math.abs(8 - inChunkX) < Math.abs(8 - inChunkX - this.SCALE) &&
-								Math.abs(8 - inChunkX) <= Math.abs(8 - inChunkX + this.SCALE) &&
-								Math.abs(8 - inChunkZ) < Math.abs(8 - inChunkZ - this.SCALE) &&
-								Math.abs(8 - inChunkZ) <= Math.abs(8 - inChunkZ + this.SCALE)) {
+						if (Math.abs(8 - inChunkX) < Math.abs(8 - inChunkX - this.scale) &&
+								Math.abs(8 - inChunkX) <= Math.abs(8 - inChunkX + this.scale) &&
+								Math.abs(8 - inChunkZ) < Math.abs(8 - inChunkZ - this.scale) &&
+								Math.abs(8 - inChunkZ) <= Math.abs(8 - inChunkZ + this.scale)) {
 							chunkStructures(level, structureRegistry, new ChunkPos(current)).forEach(rl -> features.add(new Tuple<>(new Tuple<>(finalX, finalY), rl)));
 						}
 					} else {
-						int preChunkX = (current.getX() - this.SCALE) >> 4;
-						int preChunkZ = (current.getZ() - this.SCALE) >> 4;
+						int preChunkX = (current.getX() - this.scale) >> 4;
+						int preChunkZ = (current.getZ() - this.scale) >> 4;
 						int chunkX = current.getX() >> 4;
 						int chunkZ = current.getZ() >> 4;
-						int nextChunkX = (current.getX() + this.SCALE) >> 4;
-						int nextChunkZ = (current.getZ() + this.SCALE) >> 4;
+						int nextChunkX = (current.getX() + this.scale) >> 4;
+						int nextChunkZ = (current.getZ() + this.scale) >> 4;
 						for (int di = ((preChunkX + chunkX) >> 1) + 1; di <= (chunkX + nextChunkX) >> 1; ++di) {
 							for (int dj = ((preChunkZ + chunkZ) >> 1) + 1; dj <= (chunkZ + nextChunkZ) >> 1; ++dj) {
 								chunkStructures(level, structureRegistry, new ChunkPos(di, dj)).forEach(rl -> features.add(new Tuple<>(new Tuple<>(finalX, finalY), rl)));
@@ -92,7 +139,7 @@ public class FileHelper {
 			}
 		}
 		
-		if(IngameBiomeMap.config.drawStructures()) {
+		if(this.structure) {
 			IngameBiomeMap.LOGGER.info("Found " + features.size() + " structures.");
 			features.forEach(feature -> {
 				Tuple<Integer, Integer> xy = feature.getA();
@@ -102,8 +149,7 @@ public class FileHelper {
 
 		ImageIO.write(image, "png", this.file);
 	}
-
-	// TODO: place structure icons on the map.
+	
 	private List<ResourceLocation> chunkStructures(ServerLevel level, Registry<Structure> structureRegistry, ChunkPos chunkPos) {
 		return level.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.STRUCTURE_STARTS).getAllStarts().keySet().stream()
 				.map(structureRegistry::getKey).filter(Objects::nonNull).toList();

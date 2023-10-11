@@ -36,7 +36,7 @@ public class ConfigHelper {
 	@Nullable
 	private Integer port = null;
 	@Nullable
-	private Boolean structure = null;
+	private Boolean multiThread = null;
 	@Nullable
 	private List<CustomBiome> customBiomes = null;
 	
@@ -75,8 +75,8 @@ public class ConfigHelper {
 		if(json.has("port")) {
 			this.port = json.get("port").getAsInt();
 		}
-		if(json.has("structure")) {
-			this.structure = json.get("structure").getAsBoolean();
+		if(json.has("multiThread")) {
+			this.multiThread = json.get("multiThread").getAsBoolean();
 		}
 		if(json.has("CustomBiomes")) {
 			JsonArray array = json.get("CustomBiomes").getAsJsonArray();
@@ -99,8 +99,8 @@ public class ConfigHelper {
 		if(this.port == null) {
 			this.port = 1949;
 		}
-		if(this.structure == null) {
-			this.structure = false;
+		if(this.multiThread == null) {
+			this.multiThread = true;
 		}
 		if(this.customBiomes == null) {
 			this.customBiomes = new ArrayList<>();
@@ -191,7 +191,7 @@ public class ConfigHelper {
 			FileOutputStream out = new FileOutputStream(this.file);
 			JsonObject json = new JsonObject();
 			json.addProperty("port", this.port);
-			json.addProperty("structure", this.structure);
+			json.addProperty("multiThread", this.multiThread);
 			JsonArray array = new JsonArray();
 			if(this.customBiomes != null) {
 				for (CustomBiome customBiome : this.customBiomes) {
@@ -263,7 +263,7 @@ public class ConfigHelper {
 		return this.biomeColors.get(target);
 	}
 	
-	public boolean drawStructures() {
-		return Boolean.TRUE.equals(this.structure);
+	public boolean isMultiThread() {
+		return Boolean.TRUE.equals(this.multiThread);
 	}
 }

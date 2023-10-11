@@ -5,6 +5,7 @@
   "ingame_biome_map.config.title": "",
 
   "info.export.success": "Successfully exported biome map to %s.",
+  "info.export.failure": "Failed to export biome map for I/O problem. Check server log file for detail.",
   "commands.radius.invalid": "Invalid parameter radius = %d, required radius > 0",
   "commands.scale.invalid": "Invalid parameter scale = %d, required scale > 0"
 }

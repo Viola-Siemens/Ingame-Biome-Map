@@ -12,8 +12,10 @@ public class MapIconGenerator {
 	private static final Base64.Encoder base64Encoder = Base64.getEncoder();
 	
 	public static void main(String[] args) {
-		String outer = "src/test/java/com/hexagram2021/ingame_biome_map";
-		String directoryPath = outer + "/map_icons";
+		String modid = "real_peaceful_mode";
+		String outer = "src/test/java/com/hexagram2021/ingame_biome_map/";
+		String directoryPath = outer + "/map_icons/" + modid;
+		String generatedPath = outer + "/generated/" + modid + "/";
 		
 		File directory = new File(directoryPath);
 		File[] files = directory.listFiles();
@@ -34,12 +36,12 @@ public class MapIconGenerator {
 						String id = filename.substring(0, filename.lastIndexOf('.'));
 						System.out.println(id);
 						String base64 = base64Encoder.encodeToString(bytes);
-						File generated = new File(outer + "/generated/" + id + ".json");
+						File generated = new File(generatedPath + id + ".json");
 						if(!generated.exists() && !generated.createNewFile()) {
 							continue;
 						}
 						JsonObject json = new JsonObject();
-						json.addProperty("id", "minecraft:" + id);
+						json.addProperty("id", modid + ":" + id);
 						json.addProperty("base64", base64);
 						try(FileOutputStream fos = new FileOutputStream(generated)) {
 							try(OutputStreamWriter writer = new OutputStreamWriter(fos)) {
