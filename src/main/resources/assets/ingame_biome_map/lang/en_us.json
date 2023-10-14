@@ -6,6 +6,9 @@
 
   "info.export.success": "Successfully exported biome map to %s.",
   "info.export.failure": "Failed to export biome map for I/O problem. Check server log file for detail.",
-  "commands.radius.invalid": "Invalid parameter radius = %d, required radius > 0",
-  "commands.scale.invalid": "Invalid parameter scale = %d, required scale > 0"
+  "info.resource.success": "Successfully exported resource to %s.",
+  "info.resource.failure": "Failed to export resource for I/O problem. Check server log file for detail.",
+  "commands.radius.invalid": "Invalid parameter radius = %d, required radius > 0.",
+  "commands.scale.invalid": "Invalid parameter scale = %d, required scale > 0.",
+  "commands.height.invalid": "Invalid parameter minHeight = %d >= %d = maxHeight, required minHeight < maxHeight."
 }

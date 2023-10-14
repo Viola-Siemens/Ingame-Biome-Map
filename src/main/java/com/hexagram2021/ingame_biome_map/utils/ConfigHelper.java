@@ -187,8 +187,7 @@ public class ConfigHelper {
 	}
 
 	private void saveConfig() {
-		try {
-			FileOutputStream out = new FileOutputStream(this.file);
+		try(FileOutputStream out = new FileOutputStream(this.file)) {
 			JsonObject json = new JsonObject();
 			json.addProperty("port", this.port);
 			json.addProperty("multiThread", this.multiThread);
@@ -205,10 +204,11 @@ public class ConfigHelper {
 				}
 			}
 			json.add("CustomBiomes", array);
-			Writer writer = new OutputStreamWriter(out);
-			writeJsonToFile(writer, null, json, 0);
-			writer.close();
-			out.close();
+			try(Writer writer = new OutputStreamWriter(out)) {
+				writeJsonToFile(writer, null, json, 0);
+			} catch (IOException e) {
+				IngameBiomeMap.LOGGER.error(e.toString());
+			}
 		} catch (IOException e) {
 			IngameBiomeMap.LOGGER.error(e.toString());
 		}

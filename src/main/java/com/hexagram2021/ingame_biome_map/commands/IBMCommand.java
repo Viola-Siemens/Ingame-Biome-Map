@@ -2,6 +2,7 @@ package com.hexagram2021.ingame_biome_map.commands;
 
 import com.hexagram2021.ingame_biome_map.IngameBiomeMap;
 import com.hexagram2021.ingame_biome_map.utils.FileHelper;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -26,7 +27,7 @@ public class IBMCommand {
 	
 	public static LiteralArgumentBuilder<CommandSourceStack> register() {
 		return Commands.literal("exportbiomemap")
-				.requires((stack) -> stack.hasPermission(2))
+				.requires(stack -> stack.hasPermission(2))
 				.then(
 						Commands.argument(RADIUS_ARGUMENT, IntegerArgumentType.integer())
 								.then(
@@ -85,6 +86,6 @@ public class IBMCommand {
 		} catch (IOException e) {
 			IngameBiomeMap.LOGGER.error("Error when export biome map: ", e);
 		}
-		return 1;
+		return Command.SINGLE_SUCCESS;
 	}
 }

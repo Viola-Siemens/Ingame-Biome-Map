@@ -1,6 +1,7 @@
 package com.hexagram2021.ingame_biome_map;
 
 import com.hexagram2021.ingame_biome_map.commands.IBMCommand;
+import com.hexagram2021.ingame_biome_map.commands.ResourceExportCommand;
 import com.hexagram2021.ingame_biome_map.managers.IconManager;
 import com.hexagram2021.ingame_biome_map.utils.ConfigHelper;
 import com.mojang.brigadier.CommandDispatcher;
@@ -35,6 +36,7 @@ public class IngameBiomeMap {
 	public void registerCommands(RegisterCommandsEvent event) {
 		final CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 		dispatcher.register(IBMCommand.register());
+		dispatcher.register(ResourceExportCommand.register(event.getBuildContext()));
 	}
 	
 	@SubscribeEvent

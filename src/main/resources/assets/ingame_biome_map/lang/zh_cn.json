@@ -6,6 +6,7 @@
 
   "info.export.success": "成功将群系地图导出到 %s.",
   "info.export.failure": "由于I/O异常，无法导出群系地图。请查阅服务器日志文件获取细节。",
-  "commands.radius.invalid": "参数错误【导出半径 radius = %d】，导出半径应大于0",
-  "commands.scale.invalid": "参数错误【地图缩放 scale = %d】，地图缩放应大于0"
+  "commands.radius.invalid": "参数错误【导出半径 radius = %d】，导出半径应大于0。",
+  "commands.scale.invalid": "参数错误【地图缩放 scale = %d】，地图缩放应大于0。",
+  "commands.height.invalid": "参数错误【高度 minHeight = %d >= %d = maxHeight】，最低高度应小于最高高度。"
 }
