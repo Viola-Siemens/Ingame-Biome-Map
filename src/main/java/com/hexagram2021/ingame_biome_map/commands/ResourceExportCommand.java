@@ -34,6 +34,8 @@ public class ResourceExportCommand {
 	private static final String MAX_HEIGHT_ARGUMENT = "maxHeightExclusive";
 	private static final String BIOME_ARGUMENT = "biome";
 	
+	private static int taskId = 0;
+	
 	private static String defaultBiomeTag(ServerLevel level) {
 		ResourceLocation id = level.dimension().location();
 		return id.getNamespace() + ":is_" + id.getPath();
@@ -61,9 +63,9 @@ public class ResourceExportCommand {
 														-63, 64
 												))
 												.then(
-														Commands.argument(MIN_HEIGHT_ARGUMENT, IntegerArgumentType.integer(-63, 320))
+														Commands.argument(MIN_HEIGHT_ARGUMENT, IntegerArgumentType.integer(-64, 320))
 																.then(
-																		Commands.argument(MAX_HEIGHT_ARGUMENT, IntegerArgumentType.integer(-63, 320))
+																		Commands.argument(MAX_HEIGHT_ARGUMENT, IntegerArgumentType.integer(-64, 320))
 																				.executes(context -> exportResourceWithoutBiome(
 																						context,
 																						context.getSource().getLevel(),
@@ -88,7 +90,8 @@ public class ResourceExportCommand {
 			throw INVALID_HEIGHT_PARAMETER.create(minHeightInclusive, maxHeightExclusive);
 		}
 		
-		File file = new File(filePath + "/" + block.asPrintable().replaceAll(":", "_") + "(" + chunk + ").json");
+		File file = new File(filePath + "/" + block.asPrintable().replaceAll(":", "_") + "(" + chunk + ")-" + taskId + ".json");
+		taskId += 1;
 		try {
 			if (!filePath.exists() && !filePath.mkdir()) {
 				IngameBiomeMap.LOGGER.error("Could not mkdir " + filePath);
@@ -96,25 +99,18 @@ public class ResourceExportCommand {
 				IngameBiomeMap.LOGGER.error("Could not create new file " + file);
 			} else {
 				IngameBiomeMap.LOGGER.info("Exporting resource for " + block.asPrintable() + " in " + chunk + " chunks.");
-				try(FileOutputStream out = new FileOutputStream(file)) {
-					try(Writer writer = new OutputStreamWriter(out)) {
-						if (IngameBiomeMap.config.isMultiThread()) {
-							new Thread(() -> {
-								try {
-									threadTask(writer, level, block, chunk, minHeightInclusive, maxHeightExclusive);
-									context.getSource().sendSuccess(() -> Component.translatable("info.resource.success", file.toString()), true);
-								} catch (IOException e) {
-									context.getSource().sendSuccess(() -> Component.translatable("info.resource.failure"), true);
-								}
-							}).start();
-						} else {
-							threadTask(writer, level, block, chunk, minHeightInclusive, maxHeightExclusive);
+				if (IngameBiomeMap.config.isMultiThread()) {
+					new Thread(() -> {
+						try {
+							threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
+							context.getSource().sendSuccess(() -> Component.translatable("info.resource.success", file.toString()), true);
+						} catch (Exception e) {
+							context.getSource().sendSuccess(() -> Component.translatable("info.resource.failure"), true);
+							IngameBiomeMap.LOGGER.error("Error exporting resource.", e);
 						}
-					} catch (IOException e) {
-						IngameBiomeMap.LOGGER.error(e.toString());
-					}
-				} catch (IOException e) {
-					IngameBiomeMap.LOGGER.error(e.toString());
+					}).start();
+				} else {
+					threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
 				}
 			}
 		} catch (IOException e) {
@@ -124,7 +120,7 @@ public class ResourceExportCommand {
 		return Command.SINGLE_SUCCESS;
 	}
 	
-	private static void threadTask(Writer writer, ServerLevel level, ResourceOrTagArgument.Result<Block> block,
+	private static void threadTask(File file, ServerLevel level, ResourceOrTagArgument.Result<Block> block,
 								   int chunk, int minHeightInclusive, int maxHeightExclusive) throws IOException {
 		int chunkX = level.getRandom().nextInt(65536) - 32768;
 		int chunkZ = level.getRandom().nextInt(65536) - 32768;
@@ -163,7 +159,15 @@ public class ResourceExportCommand {
 		}
 		json.add("values", values);
 		
-		ConfigHelper.writeJsonToFile(writer, null, json, 0);
+		try(FileOutputStream out = new FileOutputStream(file)) {
+			try(Writer writer = new OutputStreamWriter(out)) {
+				ConfigHelper.writeJsonToFile(writer, null, json, 0);
+			} catch (IOException e) {
+				IngameBiomeMap.LOGGER.error(e.toString());
+			}
+		} catch (IOException e) {
+			IngameBiomeMap.LOGGER.error(e.toString());
+		}
 	}
 	
 	@SuppressWarnings("unused")
