@@ -48,7 +48,7 @@ public class ResourceExportCommand {
 										context.getSource().getLevel(),
 										ResourceOrTagArgument.getResourceOrTag(context, BLOCK_ARGUMENT, Registries.BLOCK),
 										1024,
-										-63, 256
+										-63, 64
 								))
 								.then(
 										Commands.argument(CHUNK_COUNT_ARGUMENT, IntegerArgumentType.integer(4, 65536))
@@ -57,7 +57,7 @@ public class ResourceExportCommand {
 														context.getSource().getLevel(),
 														ResourceOrTagArgument.getResourceOrTag(context, BLOCK_ARGUMENT, Registries.BLOCK),
 														IntegerArgumentType.getInteger(context, CHUNK_COUNT_ARGUMENT),
-														-63, 256
+														-63, 64
 												))
 												.then(
 														Commands.argument(MIN_HEIGHT_ARGUMENT, IntegerArgumentType.integer(-63, 320))
@@ -94,7 +94,7 @@ public class ResourceExportCommand {
 			} else if (!file.exists() && !file.createNewFile()) {
 				IngameBiomeMap.LOGGER.error("Could not create new file " + file);
 			} else {
-				IngameBiomeMap.LOGGER.info("Exporting resource for " + block.asPrintable() + " in " + chunk + "chunks.");
+				IngameBiomeMap.LOGGER.info("Exporting resource for " + block.asPrintable() + " in " + chunk + " chunks.");
 				try(FileOutputStream out = new FileOutputStream(file)) {
 					try(Writer writer = new OutputStreamWriter(out)) {
 						if (IngameBiomeMap.config.isMultiThread()) {
