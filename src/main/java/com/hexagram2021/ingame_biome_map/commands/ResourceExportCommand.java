@@ -21,6 +21,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.fml.loading.FMLLoader;
 
 import java.io.*;
 
@@ -87,7 +88,7 @@ public class ResourceExportCommand {
 			throw INVALID_HEIGHT_PARAMETER.create(minHeightInclusive, maxHeightExclusive);
 		}
 		
-		File file = new File(filePath + "/" + block.asPrintable().replaceAll(":", "_") + "(" + chunk + ").png");
+		File file = new File(filePath + "/" + block.asPrintable().replaceAll(":", "_") + "(" + chunk + ").json");
 		try {
 			if (!filePath.exists() && !filePath.mkdir()) {
 				IngameBiomeMap.LOGGER.error("Could not mkdir " + filePath);
@@ -146,6 +147,7 @@ public class ResourceExportCommand {
 			}
 		}
 		JsonObject json = new JsonObject();
+		json.addProperty("version", FMLLoader.versionInfo().mcVersion());
 		json.addProperty(BLOCK_ARGUMENT, block.asPrintable());
 		json.addProperty("dimension", level.dimension().location().toString());
 		json.addProperty(BIOME_ARGUMENT, defaultBiomeTag(level));
