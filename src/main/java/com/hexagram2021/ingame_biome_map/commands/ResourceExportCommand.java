@@ -1,5 +1,6 @@
 package com.hexagram2021.ingame_biome_map.commands;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hexagram2021.ingame_biome_map.IngameBiomeMap;
 import com.hexagram2021.ingame_biome_map.utils.ConfigHelper;
@@ -109,38 +110,67 @@ public class ResourceExportCommand {
 			return Command.SINGLE_SUCCESS;
 		}
 		
-		for(int r = 0; r < repeat; ++r) {
-			File file = new File(filePath + "/" + block.asPrintable().replaceAll("/", "_").replaceAll(":", "_") + "(" + chunk + ")-" + taskId + ".json");
-			taskId += 1;
-			try {
-				if (!file.exists() && !file.createNewFile()) {
-					IngameBiomeMap.LOGGER.error("Could not create new file " + file);
-				} else {
-					IngameBiomeMap.LOGGER.info("Exporting resource for " + block.asPrintable() + " in " + chunk + " chunks.");
-					context.getSource().sendSuccess(() -> Component.translatable("info.ibm.exporting"), true);
-					if (IngameBiomeMap.config.isMultiThread()) {
-						new Thread(() -> {
+		File file = new File(filePath + "/" + block.asPrintable().replaceAll("/", "_").replaceAll(":", "_") + "(" + chunk + ")-" + taskId + ".json");
+		taskId += 1;
+		try {
+			if (!file.exists() && !file.createNewFile()) {
+				IngameBiomeMap.LOGGER.error("Could not create new file " + file);
+			} else {
+				IngameBiomeMap.LOGGER.info("Exporting resource for " + block.asPrintable() + " in " + chunk + " chunks.");
+				context.getSource().sendSuccess(() -> Component.translatable("info.ibm.exporting"), true);
+				JsonObject[] results = new JsonObject[repeat];
+				if (IngameBiomeMap.config.isMultiThread()) {
+					new Thread(() -> {
+						Thread[] threads = new Thread[repeat];
+						for(int r = 0; r < repeat; ++r) {
+							int finalR = r;
+							threads[r] = new Thread(() -> {
+								results[finalR] = new JsonObject();
+								try {
+									threadTask(results[finalR], level, block, chunk, minHeightInclusive, maxHeightExclusive);
+								} catch (Exception e) {
+									context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.failure"), true);
+									IngameBiomeMap.LOGGER.error("Error exporting resource.", e);
+								}
+							});
+							threads[r].start();
+						}
+						for(int r = 0; r < repeat; ++r) {
 							try {
-								threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
-								context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.success", file.toString()), true);
-							} catch (Exception e) {
+								threads[r].join();
+							} catch (InterruptedException e) {
 								context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.failure"), true);
 								IngameBiomeMap.LOGGER.error("Error exporting resource.", e);
 							}
-						}).start();
-					} else {
-						threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
+						}
+						output(
+								context, file, block.asPrintable(),
+								level.dimension().location().toString(), defaultBiomeTag(level), level.getSeed(),
+								minHeightInclusive, maxHeightExclusive,
+								results
+						);
+					}).start();
+				} else {
+					for(int r = 0; r < repeat; ++r) {
+						results[r] = new JsonObject();
+						threadTask(results[r], level, block, chunk, minHeightInclusive, maxHeightExclusive);
 					}
+					output(
+							context, file, block.asPrintable(),
+							level.dimension().location().toString(), defaultBiomeTag(level), level.getSeed(),
+							minHeightInclusive, maxHeightExclusive,
+							results
+					);
 				}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
 			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		
 		return Command.SINGLE_SUCCESS;
 	}
 	
-	private static void threadTask(File file, ServerLevel level, ResourceOrTagArgument.Result<Block> block,
+	private static void threadTask(JsonObject json, ServerLevel level, ResourceOrTagArgument.Result<Block> block,
 								   int chunk, int minHeightInclusive, int maxHeightExclusive) throws IOException {
 		int chunkX = level.getRandom().nextInt(65536) - 32768;
 		int chunkZ = level.getRandom().nextInt(65536) - 32768;
@@ -162,30 +192,64 @@ public class ResourceExportCommand {
 				}
 			}
 		}
-		JsonObject json = new JsonObject();
-		json.addProperty("version", FMLLoader.versionInfo().mcVersion());
-		json.addProperty(BLOCK_ARGUMENT, block.asPrintable());
-		json.addProperty("dimension", level.dimension().location().toString());
-		json.addProperty(BIOME_ARGUMENT, defaultBiomeTag(level));
-		json.addProperty("chunk_count", chunk);
-		JsonObject info = new JsonObject();
-		info.addProperty("seed", level.getSeed());
-		info.addProperty("x", chunkX);
-		info.addProperty("z", chunkZ);
-		json.add("info", info);
+		
+		json.addProperty("chunk", chunk);
+		json.addProperty("x", chunkX);
+		json.addProperty("z", chunkZ);
 		JsonObject values = new JsonObject();
 		for(int y = minHeightInclusive; y < maxHeightExclusive; ++y) {
 			values.addProperty(String.valueOf(y), result[y - minHeightInclusive]);
 		}
 		json.add("values", values);
+	}
+	
+	private static void output(CommandContext<CommandSourceStack> context, File file, String block, String dimension, String biome, long seed,
+							   int minHeightInclusive, int maxHeightExclusive, JsonObject[] results) {
+		JsonObject combined = new JsonObject();
+		combined.addProperty("version", FMLLoader.versionInfo().mcVersion());
+		combined.addProperty(BLOCK_ARGUMENT, block);
+		combined.addProperty("dimension", dimension);
+		combined.addProperty(BIOME_ARGUMENT, biome);
+		JsonObject info = new JsonObject();
+		info.addProperty("seed", seed);
+		JsonArray coordinates = new JsonArray();
+		int[] combineResult = new int[maxHeightExclusive - minHeightInclusive];
+		JsonObject values = new JsonObject();
+		
+		int chunk = 0;
+		for(JsonObject result: results) {
+			JsonObject coordinate = new JsonObject();
+			int count = result.get("chunk").getAsInt();
+			chunk += count;
+			//Make the result reproducible.
+			coordinate.addProperty("chunk", count);
+			coordinate.addProperty("x", result.get("x").getAsInt());
+			coordinate.addProperty("z", result.get("z").getAsInt());
+			coordinates.add(coordinate);
+			
+			JsonObject ys = result.get("values").getAsJsonObject();
+			for(int y = minHeightInclusive; y < maxHeightExclusive; ++y) {
+				combineResult[y - minHeightInclusive] += ys.get(String.valueOf(y)).getAsInt();
+			}
+		}
+		for(int y = minHeightInclusive; y < maxHeightExclusive; ++y) {
+			values.addProperty(String.valueOf(y), combineResult[y - minHeightInclusive]);
+		}
+		combined.addProperty("chunk_count", chunk);
+		info.add("coordinates", coordinates);
+		combined.add("info", info);
+		combined.add("values", values);
 		
 		try(FileOutputStream out = new FileOutputStream(file)) {
 			try(Writer writer = new OutputStreamWriter(out)) {
-				ConfigHelper.writeJsonToFile(writer, null, json, 0);
+				ConfigHelper.writeJsonToFile(writer, null, combined, 0);
+				context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.success", file.toString()), true);
 			} catch (IOException e) {
+				context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.failure"), true);
 				IngameBiomeMap.LOGGER.error(e.toString());
 			}
 		} catch (IOException e) {
+			context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.failure"), true);
 			IngameBiomeMap.LOGGER.error(e.toString());
 		}
 	}
