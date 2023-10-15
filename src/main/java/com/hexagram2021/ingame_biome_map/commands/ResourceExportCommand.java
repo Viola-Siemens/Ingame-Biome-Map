@@ -110,7 +110,7 @@ public class ResourceExportCommand {
 		}
 		
 		for(int r = 0; r < repeat; ++r) {
-			File file = new File(filePath + "/" + block.asPrintable().replaceAll(":", "_") + "(" + chunk + ")-" + taskId + ".json");
+			File file = new File(filePath + "/" + block.asPrintable().replaceAll("/", "_").replaceAll(":", "_") + "(" + chunk + ")-" + taskId + ".json");
 			taskId += 1;
 			try {
 				if (!file.exists() && !file.createNewFile()) {
