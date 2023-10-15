@@ -99,13 +99,14 @@ public class ResourceExportCommand {
 				IngameBiomeMap.LOGGER.error("Could not create new file " + file);
 			} else {
 				IngameBiomeMap.LOGGER.info("Exporting resource for " + block.asPrintable() + " in " + chunk + " chunks.");
+				context.getSource().sendSuccess(() -> Component.translatable("info.ibm.exporting"), true);
 				if (IngameBiomeMap.config.isMultiThread()) {
 					new Thread(() -> {
 						try {
 							threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
-							context.getSource().sendSuccess(() -> Component.translatable("info.resource.success", file.toString()), true);
+							context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.success", file.toString()), true);
 						} catch (Exception e) {
-							context.getSource().sendSuccess(() -> Component.translatable("info.resource.failure"), true);
+							context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.failure"), true);
 							IngameBiomeMap.LOGGER.error("Error exporting resource.", e);
 						}
 					}).start();

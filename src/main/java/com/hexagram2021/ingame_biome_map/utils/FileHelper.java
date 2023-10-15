@@ -65,6 +65,7 @@ public class FileHelper {
 			IngameBiomeMap.LOGGER.error("Could not create new file " + this.file);
 		} else {
 			IngameBiomeMap.LOGGER.info("Exporting map with radius of " + this.radius);
+			context.getSource().sendSuccess(() -> Component.translatable("info.ibm.exporting"), true);
 			if(IngameBiomeMap.config.isMultiThread()) {
 				new Thread(() -> threadTask(context, standPos)).start();
 			} else {
@@ -77,10 +78,10 @@ public class FileHelper {
 		try {
 			this.writeToFile(player.serverLevel(), standPos);
 			IngameBiomeMap.LOGGER.info("Successfully exported map with radius of " + this.radius);
-			player.sendSystemMessage(Component.translatable("info.export.success", this.file.toString()));
+			player.sendSystemMessage(Component.translatable("info.ibm.export.success", this.file.toString()));
 		} catch (IOException e) {
 			IngameBiomeMap.LOGGER.info("Failed to exported biome map.", e);
-			player.sendSystemMessage(Component.translatable("info.export.failure"));
+			player.sendSystemMessage(Component.translatable("info.ibm.export.failure"));
 		}
 	}
 	
@@ -88,10 +89,10 @@ public class FileHelper {
 		try {
 			this.writeToFile(context.getSource().getLevel(), standPos);
 			IngameBiomeMap.LOGGER.info("Successfully exported map with radius of " + this.radius);
-			context.getSource().sendSuccess(() -> Component.translatable("info.export.success", this.file.toString()), true);
+			context.getSource().sendSuccess(() -> Component.translatable("info.ibm.export.success", this.file.toString()), true);
 		} catch (IOException e) {
 			IngameBiomeMap.LOGGER.info("Failed to exported biome map.", e);
-			context.getSource().sendSuccess(() -> Component.translatable("info.export.failure"), true);
+			context.getSource().sendSuccess(() -> Component.translatable("info.ibm.export.failure"), true);
 		}
 	}
 
