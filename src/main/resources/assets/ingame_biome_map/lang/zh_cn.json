@@ -8,7 +8,7 @@
   "info.ibm.export.failure": "由于I/O异常，无法导出群系地图。请查阅服务器日志文件获取细节。",
   "info.ibm.resource.success": "成功将资源统计数据导出到 %s。",
   "info.ibm.resource.failure": "由于I/O异常，无法导出资源统计数据。请查阅服务器日志文件获取细节。",
-  "info.ibm.exporting": "导出中，请不要重复操作。",
+  "info.ibm.exporting": "成功创建导出任务，请不要重复操作。",
   "commands.radius.invalid": "参数错误【导出半径 radius = %d】，导出半径应大于0。",
   "commands.scale.invalid": "参数错误【地图缩放 scale = %d】，地图缩放应大于0。",
   "commands.height.invalid": "参数错误【高度 minHeight = %d >= %d = maxHeight】，最低高度应小于最高高度。"

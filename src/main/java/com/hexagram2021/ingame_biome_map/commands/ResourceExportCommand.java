@@ -33,6 +33,7 @@ public class ResourceExportCommand {
 	private static final String MIN_HEIGHT_ARGUMENT = "minHeightInclusive";
 	private static final String MAX_HEIGHT_ARGUMENT = "maxHeightExclusive";
 	private static final String BIOME_ARGUMENT = "biome";
+	private static final String REPEAT_ARGUMENT = "multiProcessor";
 	
 	private static int taskId = 0;
 	
@@ -51,7 +52,7 @@ public class ResourceExportCommand {
 										context.getSource().getLevel(),
 										ResourceOrTagArgument.getResourceOrTag(context, BLOCK_ARGUMENT, Registries.BLOCK),
 										1024,
-										-63, 64
+										-63, 64, 1
 								))
 								.then(
 										Commands.argument(CHUNK_COUNT_ARGUMENT, IntegerArgumentType.integer(4, 65536))
@@ -60,7 +61,7 @@ public class ResourceExportCommand {
 														context.getSource().getLevel(),
 														ResourceOrTagArgument.getResourceOrTag(context, BLOCK_ARGUMENT, Registries.BLOCK),
 														IntegerArgumentType.getInteger(context, CHUNK_COUNT_ARGUMENT),
-														-63, 64
+														-63, 64, 1
 												))
 												.then(
 														Commands.argument(MIN_HEIGHT_ARGUMENT, IntegerArgumentType.integer(-64, 320))
@@ -72,8 +73,21 @@ public class ResourceExportCommand {
 																						ResourceOrTagArgument.getResourceOrTag(context, BLOCK_ARGUMENT, Registries.BLOCK),
 																						IntegerArgumentType.getInteger(context, CHUNK_COUNT_ARGUMENT),
 																						IntegerArgumentType.getInteger(context, MIN_HEIGHT_ARGUMENT),
-																						IntegerArgumentType.getInteger(context, MAX_HEIGHT_ARGUMENT)
+																						IntegerArgumentType.getInteger(context, MAX_HEIGHT_ARGUMENT),
+																						1
 																				))
+																				.then(
+																						Commands.argument(REPEAT_ARGUMENT, IntegerArgumentType.integer(1, 64))
+																								.executes(context -> exportResourceWithoutBiome(
+																										context,
+																										context.getSource().getLevel(),
+																										ResourceOrTagArgument.getResourceOrTag(context, BLOCK_ARGUMENT, Registries.BLOCK),
+																										IntegerArgumentType.getInteger(context, CHUNK_COUNT_ARGUMENT),
+																										IntegerArgumentType.getInteger(context, MIN_HEIGHT_ARGUMENT),
+																										IntegerArgumentType.getInteger(context, MAX_HEIGHT_ARGUMENT),
+																										IntegerArgumentType.getInteger(context, REPEAT_ARGUMENT)
+																								))
+																				)
 																)
 												)
 								)
@@ -85,37 +99,42 @@ public class ResourceExportCommand {
 	);
 	
 	public static int exportResourceWithoutBiome(CommandContext<CommandSourceStack> context, ServerLevel level, ResourceOrTagArgument.Result<Block> block,
-												 int chunk, int minHeightInclusive, int maxHeightExclusive) throws CommandSyntaxException {
+												 int chunk, int minHeightInclusive, int maxHeightExclusive, int repeat) throws CommandSyntaxException {
 		if(maxHeightExclusive <= minHeightInclusive) {
 			throw INVALID_HEIGHT_PARAMETER.create(minHeightInclusive, maxHeightExclusive);
 		}
+		if (!filePath.exists() && !filePath.mkdir()) {
+			IngameBiomeMap.LOGGER.error("Could not mkdir " + filePath);
+			context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.failure"), true);
+			return Command.SINGLE_SUCCESS;
+		}
 		
-		File file = new File(filePath + "/" + block.asPrintable().replaceAll(":", "_") + "(" + chunk + ")-" + taskId + ".json");
-		taskId += 1;
-		try {
-			if (!filePath.exists() && !filePath.mkdir()) {
-				IngameBiomeMap.LOGGER.error("Could not mkdir " + filePath);
-			} else if (!file.exists() && !file.createNewFile()) {
-				IngameBiomeMap.LOGGER.error("Could not create new file " + file);
-			} else {
-				IngameBiomeMap.LOGGER.info("Exporting resource for " + block.asPrintable() + " in " + chunk + " chunks.");
-				context.getSource().sendSuccess(() -> Component.translatable("info.ibm.exporting"), true);
-				if (IngameBiomeMap.config.isMultiThread()) {
-					new Thread(() -> {
-						try {
-							threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
-							context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.success", file.toString()), true);
-						} catch (Exception e) {
-							context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.failure"), true);
-							IngameBiomeMap.LOGGER.error("Error exporting resource.", e);
-						}
-					}).start();
+		for(int r = 0; r < repeat; ++r) {
+			File file = new File(filePath + "/" + block.asPrintable().replaceAll(":", "_") + "(" + chunk + ")-" + taskId + ".json");
+			taskId += 1;
+			try {
+				if (!file.exists() && !file.createNewFile()) {
+					IngameBiomeMap.LOGGER.error("Could not create new file " + file);
 				} else {
-					threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
+					IngameBiomeMap.LOGGER.info("Exporting resource for " + block.asPrintable() + " in " + chunk + " chunks.");
+					context.getSource().sendSuccess(() -> Component.translatable("info.ibm.exporting"), true);
+					if (IngameBiomeMap.config.isMultiThread()) {
+						new Thread(() -> {
+							try {
+								threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
+								context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.success", file.toString()), true);
+							} catch (Exception e) {
+								context.getSource().sendSuccess(() -> Component.translatable("info.ibm.resource.failure"), true);
+								IngameBiomeMap.LOGGER.error("Error exporting resource.", e);
+							}
+						}).start();
+					} else {
+						threadTask(file, level, block, chunk, minHeightInclusive, maxHeightExclusive);
+					}
 				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 		
 		return Command.SINGLE_SUCCESS;
