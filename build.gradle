@@ -21,7 +21,7 @@ base {
     archivesName = 'ingame_biome_map'
 }
 
-version = '3.0.0'
+version = '3.0.1'
 group = 'com.hexagram2021.ingame_biome_map'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
